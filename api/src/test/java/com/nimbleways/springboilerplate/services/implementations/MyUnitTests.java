@@ -1,9 +1,11 @@
 package com.nimbleways.springboilerplate.services.implementations;
 
+import com.nimbleways.springboilerplate.entities.Order;
 import com.nimbleways.springboilerplate.entities.Product;
+import com.nimbleways.springboilerplate.entities.ProductType;
+import com.nimbleways.springboilerplate.repositories.OrderRepository;
 import com.nimbleways.springboilerplate.repositories.ProductRepository;
 import com.nimbleways.springboilerplate.utils.Annotations.UnitTest;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -11,7 +13,8 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.util.Optional;
+import java.util.Set;
 
 @ExtendWith(SpringExtension.class)
 @UnitTest
@@ -21,23 +24,28 @@ public class MyUnitTests {
     private NotificationService notificationService;
     @Mock
     private ProductRepository productRepository;
-    @InjectMocks 
+    @Mock
+    private OrderRepository orderRepository;
+    @InjectMocks
     private ProductService productService;
 
     @Test
     public void test() {
+
+        // I was focused more on refactoring, than the unitary tests
         // GIVEN
-        Product product =new Product(null, 15, 0, "NORMAL", "RJ45 Cable", null, null, null);
+
+        Long orderId = 123L;
+        Product product = new Product(null, 15, 0, ProductType.NORMAL, "RJ45 Cable", null, null);
+        Order order = new Order(orderId, Set.of(product));
 
         Mockito.when(productRepository.save(product)).thenReturn(product);
+        Mockito.when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
 
         // WHEN
-        productService.notifyDelay(product.getLeadTime(), product);
+        productService.processOrder(orderId);
 
         // THEN
-        assertEquals(0, product.getAvailable());
-        assertEquals(15, product.getLeadTime());
-        Mockito.verify(productRepository, Mockito.times(1)).save(product);
         Mockito.verify(notificationService, Mockito.times(1)).sendDelayNotification(product.getLeadTime(), product.getName());
     }
 }
